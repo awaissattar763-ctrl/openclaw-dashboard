@@ -301,7 +301,7 @@ const LOGS=[
 ];
 function OverviewPage({stats}){
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="OVERVIEW" s="Real-time agent performance & infrastructure telemetry"/>
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:9,marginBottom:13}}>
         {[{l:"Requests",v:stats.requests.toLocaleString(),c:GN},{l:"Uptime",v:"99.9%",c:BL},{l:"Agents",v:"7",c:PU},{l:"CPU",v:Math.round(stats.cpu)+"%",c:stats.cpu>80?RD:GN},{l:"Memory",v:Math.round(stats.memory)+"%",c:OR}].map((s,i)=>(
@@ -377,7 +377,7 @@ function ChannelsPage({addToast}){
   const toggle=i=>{setChs(p=>p.map((c,j)=>j===i?{...c,status:c.status==="connected"?"disconnected":"connected",color:c.status==="connected"?MT:GN}:c));addToast(`${chs[i].name} ${chs[i].status==="connected"?"disconnected":"connected"}`,"success");};
   const ch=chs[sel];
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="CHANNELS" s="External integrations and communication channels"/>
       <div style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:12}}>
         <div style={{display:"flex",flexDirection:"column",gap:7}}>
@@ -423,7 +423,7 @@ function InstancesPage({addToast}){
   const [insts,setInsts]=useState(INST_INIT);const [ld,setLd]=useState({});
   const act=async(i,action)=>{setLd(p=>({...p,[i]:action}));await new Promise(r=>setTimeout(r,800));setInsts(p=>p.map((inst,j)=>{if(j!==i)return inst;if(action==="start")return{...inst,status:"running",cpu:Math.floor(8+Math.random()*20),mem:Math.floor(100+Math.random()*250),up:"0m"};if(action==="stop")return{...inst,status:"stopped",cpu:0,mem:0,up:"—"};return{...inst,status:"running",up:"0m"};}));setLd(p=>{const n={...p};delete n[i];return n;});addToast(`${insts[i].name} ${action}ed`,"success");};
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="INSTANCES" s="Connected agent instances and compute nodes"/>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:9,marginBottom:13}}>
         {[{l:"Total",v:insts.length,c:BL},{l:"Running",v:insts.filter(i=>i.status==="running").length,c:GN},{l:"Stopped",v:insts.filter(i=>i.status==="stopped").length,c:MT},{l:"Errors",v:insts.filter(i=>i.status==="error").length,c:RD}].map((s,i)=>(
@@ -465,7 +465,7 @@ function SessionsPage(){
   const [filter,setFilter]=useState("All");
   const filtered=SESS.filter(s=>filter==="All"||(filter==="Active"&&s.status==="active")||(filter==="Closed"&&s.status==="closed"));
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="SESSIONS" s="Agent conversation session history and analytics"/>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:9,marginBottom:13}}>
         {[{l:"Total",v:SESS.length,c:BL},{l:"Active",v:SESS.filter(s=>s.status==="active").length,c:GN},{l:"Total Msgs",v:SESS.reduce((a,s)=>a+s.msgs,0),c:PU},{l:"Total Tokens",v:(SESS.reduce((a,s)=>a+s.tokens,0)/1000).toFixed(1)+"K",c:OR}].map((s,i)=>(
@@ -506,7 +506,7 @@ const UTAG_INIT=[
 function UtagsPage({addToast}){
   const [tags,setTags]=useState(UTAG_INIT);const [newTag,setNewTag]=useState("");const [newDesc,setNewDesc]=useState("");
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="UTAGS" s="User tagging system for routing and segmentation"/>
       <div style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:12}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
@@ -544,7 +544,7 @@ const AGENTS_INIT=[
 function AgentsPage({addToast}){
   const [agents,setAgents]=useState(AGENTS_INIT);
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="AGENTS" s="AI agent fleet management and performance monitoring"/>
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:9,marginBottom:13}}>
         {[{l:"Total",v:agents.length,c:BL},{l:"Active",v:agents.filter(a=>a.status==="active").length,c:GN},{l:"Avg Success",v:Math.round(agents.filter(a=>a.success>0).reduce((s,a)=>s+a.success,0)/agents.filter(a=>a.success>0).length)+"%",c:PU}].map((s,i)=>(
@@ -594,7 +594,7 @@ function SkillsPage({addToast}){
   const filtered=skills.filter(s=>(s.name.toLowerCase().includes(sq.toLowerCase())||s.desc.toLowerCase().includes(sq.toLowerCase()))&&(filt==="All"||(filt==="Active"&&s.on)||(filt==="Disabled"&&!s.on)));
   const toggle=useCallback(name=>{setSkills(p=>p.map(s=>s.name===name?{...s,on:!s.on}:s));const sk=skills.find(s=>s.name===name);addToast(`${name} ${sk?.on?"disabled":"enabled"}`,sk?.on?"info":"success");},[skills,addToast]);
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:13}}>
         <SH t="AGENT SKILLS" s={`${skills.filter(s=>s.on).length} active · ${skills.filter(s=>!s.on).length} disabled`}/>
         <button className="bg" onClick={()=>addToast("ClavHub registry opened","info")} style={{padding:"6px 14px",background:`linear-gradient(135deg,${GN}cc,${BL}aa)`,border:"none",borderRadius:7,color:"#050c1a",fontFamily:"'Orbitron',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer",marginTop:-10}}>+ ADD SKILL</button>
@@ -639,7 +639,7 @@ const NODES=[
 ];
 function NodesPage(){
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="NODES" s="Distributed compute nodes and infrastructure health"/>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:9,marginBottom:13}}>
         {[{l:"Total",v:NODES.length,c:BL},{l:"Healthy",v:NODES.filter(n=>n.status==="healthy").length,c:GN},{l:"Warning",v:NODES.filter(n=>n.status==="warning").length,c:YL},{l:"Avg Latency",v:Math.round(NODES.reduce((a,n)=>a+n.latency,0)/NODES.length)+"ms",c:PU}].map((s,i)=>(
@@ -671,7 +671,7 @@ function NodesPage(){
 function CommunicationsPage({addToast}){
   const [on1,setOn1]=useState(true);const [on2,setOn2]=useState(false);const [on3,setOn3]=useState(true);const [on4,setOn4]=useState(true);
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="COMMUNICATIONS" s="Notification routing and messaging configuration"/>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
         <div style={{display:"flex",flexDirection:"column",gap:11}}>
@@ -724,7 +724,7 @@ function InfraPage({addToast}){
   const act=async(i,action)=>{setLd(p=>({...p,[i]:action}));await new Promise(r=>setTimeout(r,800));setConts(p=>p.map((c,j)=>{if(j!==i)return c;if(action==="play")return{...c,status:"running",cpu:Math.floor(5+Math.random()*20),mem:Math.floor(100+Math.random()*200),up:"0m"};if(action==="stop")return{...c,status:"stopped",cpu:0,mem:0,up:"—"};return{...c,status:"running",up:"0m"};}));setLd(p=>{const n={...p};delete n[i];return n;});addToast(`${conts[i].name} ${action==="play"?"started":action==="stop"?"stopped":"restarted"}`,action==="stop"?"info":"success");};
   const run=conts.filter(c=>c.status==="running").length;
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="DOCKER MANAGER" s={`${run} running · ${conts.length-run} inactive`}/>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:9,marginBottom:13}}>
         {[{l:"Total",v:conts.length,c:BL},{l:"Running",v:run,c:GN},{l:"Errors",v:conts.filter(c=>c.status==="error").length,c:RD},{l:"Total Mem",v:conts.reduce((a,c)=>a+c.mem,0)+"MB",c:PU}].map((s,i)=>(
@@ -799,7 +799,7 @@ function ConfigPage({addToast,apiKey,setApiKey,apiModel,setApiModel}){
   };
   const deleteKey=()=>{storage.del("openclaw:apiKey");setApiKey("");addToast("API key deleted","info");};
   return(
-    <div className="fu" style={{padding:"16px 20px",minHeight:"100%",overflowY:"auto"}}>
+    <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="CONFIGURATION" s="API keys, model selection, and agent behaviour"/>
       {/* API KEY */}
       <div style={{...card({padding:"14px 16px",marginBottom:12,border:`1px solid ${GN}35`,background:`${GN}05`})}}>
