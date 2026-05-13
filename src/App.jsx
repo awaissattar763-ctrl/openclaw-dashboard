@@ -7,7 +7,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContai
 const G = `
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-html,body,#root{height:100%;width:100%;overflow:hidden;position:relative;margin:0;padding:0}
+html,body,#root{min-height:100vh;width:100%;overflow-x:hidden;overflow-y:auto;position:relative;margin:0;padding:0}
 body{font-family:'Rajdhani',sans-serif;background:#050c1a;color:#e2e8f0}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(0,255,136,0.25);border-radius:3px}
 .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,255,136,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.025) 1px,transparent 1px);background-size:44px 44px;animation:gridMove 25s linear infinite}
@@ -16,7 +16,7 @@ body{font-family:'Rajdhani',sans-serif;background:#050c1a;color:#e2e8f0}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
 @keyframes glow{0%,100%{box-shadow:0 0 8px rgba(0,255,136,0.2)}50%{box-shadow:0 0 22px rgba(0,255,136,0.55)}}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0}to{opacity:1}}
 @keyframes toastIn{from{transform:translateX(110px);opacity:0}to{transform:translateX(0);opacity:1}}
 @keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
 @keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
@@ -61,7 +61,7 @@ const Tog=({on,onChange})=>(
     <span style={{position:"absolute",top:2,left:on?20:2,width:16,height:16,borderRadius:"50%",background:on?"#020814":"rgba(255,255,255,0.4)",transition:"all 0.25s",display:"block"}}/>
   </div>
 );
-const SH=({t,s})=><div style={{marginBottom:14}}><h1 style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,fontWeight:700,color:TX,letterSpacing:"0.06em"}}>{t}</h1>{s&&<p style={{fontSize:12,color:MT,marginTop:3}}>{s}</p>}</div>;
+const SH=({t,s})=><div style={{marginBottom:14,flexShrink:0}}><h1 style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,fontWeight:700,color:TX,letterSpacing:"0.06em"}}>{t}</h1>{s&&<p style={{fontSize:12,color:MT,marginTop:3}}>{s}</p>}</div>;
 
 /* ══════════════════════════════════════════
    NAV
@@ -79,12 +79,12 @@ const PL={chat:"Chat",overview:"Overview",channels:"Channels",instances:"Instanc
 ══════════════════════════════════════════ */
 function Sidebar({active,setActive,notif}){
   return(
-    <div style={{width:182,background:"rgba(3,7,18,0.97)",borderRight:`1px solid ${BR}`,display:"flex",flexDirection:"column",flexShrink:0,zIndex:10}}>
-      <div style={{padding:"14px 13px 12px",borderBottom:`1px solid ${BR}`,display:"flex",alignItems:"center",gap:9}}>
+    <div style={{width:182,minHeight:"100vh",background:"rgba(3,7,18,0.97)",borderRight:`1px solid ${BR}`,display:"flex",flexDirection:"column",flexShrink:0,zIndex:10}}>
+      <div style={{padding:"14px 13px 12px",borderBottom:`1px solid ${BR}`,display:"flex",alignItems:"center",gap:9,flexShrink:0}}>
         <div style={{width:30,height:30,borderRadius:8,background:`linear-gradient(135deg,${GN}35,${BL}25)`,border:`1px solid ${GN}45`,display:"flex",alignItems:"center",justifyContent:"center",animation:"glow 3s infinite"}}><span style={{color:GN,fontSize:16}}>◈</span></div>
         <div><div style={{fontSize:14,fontWeight:700,color:TX,letterSpacing:"0.01em"}}>OpenClaw</div><div style={{fontSize:9,color:MT,marginTop:1}}>AI AGENT PLATFORM</div></div>
       </div>
-      <nav style={{flex:1,padding:"8px 7px",overflowY:"auto"}}>
+      <nav style={{flex:"1 1 0",padding:"8px 7px",overflowY:"auto",minHeight:0}}>
         {NAV.map(({sec,items})=>(
           <div key={sec} style={{marginBottom:5}}>
             <div style={{fontSize:9,fontWeight:700,color:MT,letterSpacing:"0.12em",padding:"3px 8px",textTransform:"uppercase"}}>{sec}</div>
@@ -101,7 +101,7 @@ function Sidebar({active,setActive,notif}){
           </div>
         ))}
       </nav>
-      <div style={{padding:"10px 13px",borderTop:`1px solid ${BR}`}}>
+      <div style={{padding:"10px 13px",borderTop:`1px solid ${BR}`,flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:7}}><Dot c={GN} p s={6}/><span style={{fontSize:10,color:GN,fontFamily:"'JetBrains Mono',monospace"}}>ONLINE</span></div>
         <div style={{display:"flex",alignItems:"center",gap:7}}>
           <div style={{width:25,height:25,borderRadius:"50%",background:`${GN}25`,border:`1px solid ${BR}`,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:9,fontWeight:700,color:GN}}>JT</span></div>
@@ -221,7 +221,7 @@ function ChatPage({addToast,setNotif,apiKey,apiModel,setApiModel}){
   },[input,busy,msgs,apiKey,apiModel,addToast,setNotif]);
 
   return(
-    <div className="fu" style={{display:"flex",gap:11,height:"100%",padding:14}}>
+    <div className="fu" style={{display:"flex",gap:11,minHeight:"100vh",padding:14}}>
       <div style={{...card({padding:0}),flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
         <div style={{padding:"9px 14px",borderBottom:`1px solid ${BR}`,display:"flex",alignItems:"center",gap:9,background:"rgba(0,0,0,0.15)"}}>
           <div style={{width:30,height:30,borderRadius:8,background:`${GN}25`,border:`1px solid ${GN}40`,display:"flex",alignItems:"center",justifyContent:"center",animation:"glow 3s infinite"}}><span style={{color:GN,fontSize:15}}>◈</span></div>
@@ -762,7 +762,7 @@ function DataPage(){
   useEffect(()=>{endRef.current?.scrollIntoView({behavior:"smooth"});},[hist]);
   const run=()=>{const c=cmd.trim();if(!c)return;setCh(p=>[c,...p]);setHi(-1);if(c==="clear"){setHist([]);setCmd("");return;}const out=CMDS[c]!==undefined?CMDS[c]:c.startsWith("echo ")?c.slice(5):`bash: ${c}: command not found`;setHist(p=>[...p,{cmd:c,out}]);setCmd("");};
   return(
-    <div className="fu" style={{padding:"16px 20px",height:"100%",display:"flex",flexDirection:"column"}}>
+    <div className="fu" style={{padding:"16px 20px",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <SH t="SERVER ACCESS" s="root@openclaw-prod-01 · type help for commands · ↑↓ for history"/>
       <div style={{flex:1,background:"#00040c",borderRadius:10,border:`1px solid ${GN}22`,overflow:"hidden",display:"flex",flexDirection:"column"}}>
         <div style={{padding:"7px 11px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",alignItems:"center",gap:7,background:"rgba(0,255,136,0.03)"}}>
@@ -879,6 +879,15 @@ export default function App(){
     return()=>clearInterval(iv);
   },[]);
 
+  const mainRef=useRef(null);
+  useEffect(()=>{
+    if(mainRef.current){
+      mainRef.current.scrollTop=0;
+      // Double-check after render completes
+      requestAnimationFrame(()=>{if(mainRef.current)mainRef.current.scrollTop=0;});
+    }
+  },[active,sq]);
+
   const addToast=useCallback((msg,type="info")=>{const id=Date.now();setToasts(p=>[...p.slice(-4),{id,msg,type}]);setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)),3800);},[]);
   const rmToast=useCallback(id=>setToasts(p=>p.filter(t=>t.id!==id)),[]);
 
@@ -917,15 +926,15 @@ export default function App(){
   };
 
   return(
-    <div style={{display:"flex",height:"100vh",maxHeight:"100vh",background:"#020814",color:TX,overflow:"hidden",position:"fixed",top:0,left:0,right:0,bottom:0,width:"100%"}}>
+    <div style={{display:"flex",minHeight:"100vh",background:"#020814",color:TX,position:"relative"}}>
       <style>{G}</style>
       <div className="grid-bg"/>
       <div style={{position:"absolute",width:500,height:500,borderRadius:"50%",background:`${GN}06`,filter:"blur(80px)",top:-200,left:-100,pointerEvents:"none",zIndex:0}}/>
       <div style={{position:"absolute",width:400,height:400,borderRadius:"50%",background:`${BL}05`,filter:"blur(80px)",bottom:-150,right:-100,pointerEvents:"none",zIndex:0}}/>
       <Sidebar active={active} setActive={setActive} notif={notif}/>
-      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,minWidth:0,height:"100%"}}>
+      <div style={{flex:"1 1 0",display:"flex",flexDirection:"column",position:"relative",zIndex:1,minWidth:0,minHeight:"100vh"}}>
         <TopBar active={active} notif={notif} setActive={setActive} sq={sq} setSq={setSq}/>
-        <main style={{flex:1,overflowY:"auto",overflowX:"hidden",minHeight:0,height:"100%"}}>{renderPage()}</main>
+        <main ref={mainRef} style={{flex:"1 1 0",overflowY:"auto",overflowX:"hidden",paddingTop:12,minHeight:0,position:"relative"}}>{renderPage()}</main>
       </div>
       <Toast toasts={toasts} rm={rmToast}/>
     </div>
