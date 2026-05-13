@@ -7,7 +7,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContai
 const G = `
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-html,body,#root{height:100%;overflow:hidden}
+html,body,#root{height:100%;width:100%;overflow:hidden;position:relative;margin:0;padding:0}
 body{font-family:'Rajdhani',sans-serif;background:#050c1a;color:#e2e8f0}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(0,255,136,0.25);border-radius:3px}
 .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,255,136,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.025) 1px,transparent 1px);background-size:44px 44px;animation:gridMove 25s linear infinite}
@@ -917,15 +917,15 @@ export default function App(){
   };
 
   return(
-    <div style={{display:"flex",height:"100vh",background:"#020814",color:TX,overflow:"hidden",position:"relative"}}>
+    <div style={{display:"flex",height:"100vh",maxHeight:"100vh",background:"#020814",color:TX,overflow:"hidden",position:"fixed",top:0,left:0,right:0,bottom:0,width:"100%"}}>
       <style>{G}</style>
       <div className="grid-bg"/>
       <div style={{position:"absolute",width:500,height:500,borderRadius:"50%",background:`${GN}06`,filter:"blur(80px)",top:-200,left:-100,pointerEvents:"none",zIndex:0}}/>
       <div style={{position:"absolute",width:400,height:400,borderRadius:"50%",background:`${BL}05`,filter:"blur(80px)",bottom:-150,right:-100,pointerEvents:"none",zIndex:0}}/>
       <Sidebar active={active} setActive={setActive} notif={notif}/>
-      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,minWidth:0}}>
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1,minWidth:0,height:"100%"}}>
         <TopBar active={active} notif={notif} setActive={setActive} sq={sq} setSq={setSq}/>
-        <main style={{flex:1,overflowY:"auto",minHeight:0}}>{renderPage()}</main>
+        <main style={{flex:1,overflowY:"auto",overflowX:"hidden",minHeight:0,height:"100%"}}>{renderPage()}</main>
       </div>
       <Toast toasts={toasts} rm={rmToast}/>
     </div>
