@@ -438,7 +438,7 @@ function Toast({toasts,rm}){
 const SYS=`You are OpenClaw, an enterprise AI agent for Jack Taylor at The Snayden Group. You have tools: gmail-voice-email, ScheduleMeetingVoice, sign-ops, tpassword, web_search, code_executor, docker_manager. When using a tool write: [TOOL: name | output: result]. Be concise and professional.`;
 
 function parseParts(text){
-  const re=/\\[TOOL:\\s*([^\\|]+)\\s*\\|\\s*output:\\s*([^\\]]+)\\]/g;
+  const re=/\[TOOL:\s*([^\|]+)\s*\|\s*output:\s*([^\]]+)\]/g;
   const parts=[];let last=0,m;
   while((m=re.exec(text))!==null){
     if(m.index>last)parts.push({type:"text",text:text.slice(last,m.index).trim()});
