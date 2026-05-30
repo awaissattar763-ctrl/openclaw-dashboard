@@ -67,6 +67,210 @@ select option{background:#0a1628;color:#e2e8f0}
 .md-content li { margin-bottom: 4px; }
 .md-content a { color: #38d9f5; text-decoration: none; }
 .md-content a:hover { text-decoration: underline; }
+
+/* Premium Animations Phase 3 */
+
+/* 1. Entrance Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger > *:nth-child(4) { animation-delay: 0.20s; }
+.stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger > *:nth-child(6) { animation-delay: 0.30s; }
+
+/* 2. Chat Animations */
+@keyframes messageSlideInRight {
+  from { opacity: 0; transform: translateX(16px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes messageSlideInLeft {
+  from { opacity: 0; transform: translateX(-16px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+.message-user { animation: messageSlideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.message-ai { animation: messageSlideInLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+.typing-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #10B981;
+  animation: typingBounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.30s; }
+
+/* 3. Glowing / Pulsing */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(0, 255, 136, 0); }
+}
+.status-active { animation: pulseGlow 2s infinite; }
+
+@keyframes dotPulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(0, 255, 136, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+}
+.live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #00ff88;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: dotPulse 2s infinite;
+}
+
+/* 4. Hover Microinteractions */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  border-color: rgba(0, 255, 136, 0.3) !important;
+}
+.btn-press { transition: transform 0.1s ease; }
+.btn-press:active { transform: scale(0.97); }
+
+.quick-cmd {
+  position: relative;
+  transition: all 0.2s ease;
+}
+.quick-cmd:hover {
+  background: rgba(0, 255, 136, 0.08) !important;
+  border-color: rgba(0, 255, 136, 0.4) !important;
+  padding-left: 20px;
+}
+.quick-cmd::after {
+  content: '→';
+  position: absolute;
+  right: 12px;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: all 0.2s ease;
+  color: #00ff88;
+}
+.quick-cmd:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 6. Animated Background */
+.dashboard-bg {
+  background-color: #050c1a;
+  background-image: 
+    linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridMove 25s linear infinite;
+}
+@keyframes breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+.ambient-glow {
+  position: fixed;
+  top: -200px; right: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,255,136,0.06), transparent 70%);
+  pointer-events: none;
+  animation: breathe 8s ease-in-out infinite;
+  z-index: 0;
+}
+
+/* 7. Sidebar Indicator */
+.nav-item {
+  position: relative;
+  transition: all 0.2s ease;
+}
+@keyframes navIndicator {
+  to { height: 60%; }
+}
+.nav-item.active {
+  background: rgba(0, 255, 136, 0.08) !important;
+  color: #00ff88 !important;
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 0;
+  background: #00ff88;
+  border-radius: 0 3px 3px 0;
+  animation: navIndicator 0.3s ease forwards;
+  box-shadow: 0 0 6px #00ff88;
+}
+
+/* 8. Page Transition */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.page-content { animation: pageEnter 0.3s ease both; }
+
+/* 9. Toast Spring */
+@keyframes toastSpringIn {
+  0% { opacity: 0; transform: translateX(100%) scale(0.9); }
+  60% { transform: translateX(-8px) scale(1.02); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes toastSlideOut {
+  to { opacity: 0; transform: translateX(120%); }
+}
+.toast-msg { animation: toastSpringIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden; position: relative; }
+.toast-msg.exiting { animation: toastSlideOut 0.3s ease forwards; }
+
+@keyframes toastProgress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+.toast-progress {
+  height: 2px;
+  background: currentColor;
+  animation: toastProgress 3.8s linear forwards;
+  position: absolute;
+  bottom: 0; left: 0;
+}
+
+/* 10. Shimmer */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, 
+    #08142c 25%, #0c1c38 50%, #08142c 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+/* 12. Glow Borders Focus */
+.input-premium {
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.input-premium:focus {
+  border-color: #00ff88;
+  box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.15);
+  outline: none;
+}
+
+/* Prefers Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 `;
 
 /* ══════════════════════════════════════════
@@ -89,7 +293,26 @@ const storage = {
 /* ══════════════════════════════════════════
    ATOMS
 ══════════════════════════════════════════ */
-const Dot=({c=GN,p=false,s=7})=><span style={{display:"inline-block",width:s,height:s,borderRadius:"50%",background:c,flexShrink:0,animation:p?"blink 2s infinite":"none"}}/>;
+function useCountUp(target, duration = 1000) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const increment = target / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+  return count;
+}
+
+const Dot=({c=GN,p=false,s=7})=><span className={p?"live-dot":""} style={{display:"inline-block",width:s,height:s,borderRadius:"50%",background:c,flexShrink:0}}/>;
 const Bdg=({l,c=GN,sm=false})=><span style={{fontSize:sm?10:11,fontWeight:600,color:c,background:`${c}18`,border:`1px solid ${c}28`,borderRadius:4,padding:sm?"1px 6px":"2px 8px",whiteSpace:"nowrap",fontFamily:"'JetBrains Mono',monospace"}}>{l}</span>;
 const Prg=({v,c=GN,h=5})=><div style={{background:"rgba(255,255,255,0.07)",borderRadius:h,height:h,overflow:"hidden",flex:1}}><div style={{width:`${Math.min(100,Math.max(0,v))}%`,height:"100%",background:`linear-gradient(90deg,${c}99,${c})`,borderRadius:h,transition:"width 0.5s"}}/></div>;
 const TT=({active,payload,label})=>active&&payload?.length?<div style={{background:"rgba(4,10,24,0.97)",border:`1px solid ${BR}`,borderRadius:7,padding:"7px 12px",fontFamily:"'Space Grotesk',sans-serif"}}><p style={{color:MT,fontSize:11,marginBottom:2}}>{label}</p>{payload.map((p,i)=><p key={i} style={{color:p.color||GN,fontSize:14,fontWeight:600}}>{p.name}: {Number(p.value).toLocaleString()}</p>)}</div>:null;
@@ -131,7 +354,7 @@ function Sidebar({active,setActive,notif,menuOpen,setMenuOpen}){
             {items.map(({id,l})=>{
               const a=active===id;
               return(
-                <div key={id} className="nl" onClick={()=>setActive(id)} style={{padding:"5px 9px",fontSize:13,fontWeight:a?600:400,color:a?GN:ML,background:a?"rgba(0,255,136,0.08)":"transparent",marginBottom:1,display:"flex",alignItems:"center",gap:7,position:"relative"}}>
+                <div key={id} className={`nl nav-item ${a?"active":""}`} onClick={()=>setActive(id)} style={{padding:"5px 9px",fontSize:13,fontWeight:a?600:400,color:a?GN:ML,background:a?"rgba(0,255,136,0.08)":"transparent",marginBottom:1,display:"flex",alignItems:"center",gap:7,position:"relative"}}>
                   {a&&<div style={{position:"absolute",left:0,top:"22%",bottom:"22%",width:2.5,background:GN,borderRadius:"0 2px 2px 0",boxShadow:`0 0 6px ${GN}`}}/>}
                   <span style={{marginLeft:a?4:0}}>{l}</span>
                   {id==="chat"&&notif>0&&<span style={{fontSize:9,background:GN,color:"#050c1a",borderRadius:"50%",width:15,height:15,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,marginLeft:"auto"}}>{notif}</span>}
@@ -167,11 +390,11 @@ function TopBar({active,notif,setActive,sq,setSq,setMenuOpen}){
         <div style={{display:"flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.04)",border:`1px solid ${BR}`,borderRadius:7,padding:"4px 9px"}}>
           <span style={{color:MT}}>⌕</span>
           <input placeholder="Search pages…" value={sq} onChange={e=>setSq(e.target.value)} style={{background:"transparent",border:"none",outline:"none",fontSize:12,color:TX,width:120,fontFamily:"'Space Grotesk',sans-serif"}}/>
-          {sq&&<span onClick={()=>setSq("")} style={{cursor:"pointer",color:MT}}>✕</span>}
+          {sq&&<span className="btn-press" onClick={()=>setSq("")} style={{cursor:"pointer",color:MT}}>✕</span>}
         </div>
-        <div style={{position:"relative",cursor:"pointer"}} onClick={()=>setActive("chat")}>
+        <div className="btn-press" style={{position:"relative",cursor:"pointer"}} onClick={()=>setActive("chat")}>
           <span style={{fontSize:17,color:(notif>0 && !hasAnyKey())?GN:MT}}>🔔</span>
-          {(notif>0 && !hasAnyKey())&&<span style={{position:"absolute",top:-4,right:-4,fontSize:9,background:GN,color:"#050c1a",borderRadius:"50%",width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{notif}</span>}
+          {(notif>0 && !hasAnyKey())&&<span style={{position:"absolute",top:-4,right:-4,fontSize:9,background:GN,color:"#050c1a",borderRadius:"50%",width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}} className="status-active">{notif}</span>}
         </div>
         <div style={{width:27,height:27,borderRadius:"50%",background:`${GN}25`,border:`1px solid ${BR}`,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:9,fontWeight:700,color:GN}}>JT</span></div>
       </div>
@@ -182,20 +405,29 @@ function TopBar({active,notif,setActive,sq,setSq,setMenuOpen}){
 /* ══════════════════════════════════════════
    TOAST
 ══════════════════════════════════════════ */
+function ToastItem({t, rm}) {
+  const [exiting, setExiting] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setExiting(true), 3500);
+    return () => clearTimeout(timer);
+  }, []);
+  const isErr = t.type==="error";
+  const isSuc = t.type==="success";
+  const c = isErr?RD:isSuc?GN:BL;
+  const ic = isErr?"!":isSuc?"✓":"ℹ";
+  return (
+    <div onClick={()=>{setExiting(true); setTimeout(()=>rm(t.id), 300);}} className={`toast-msg ${exiting?"exiting":""}`} style={{background:"rgba(10,20,40,0.95)",border:`1px solid ${c}45`,borderLeft:`4px solid ${c}`,padding:"12px 18px",borderRadius:8,color:TX,fontSize:13,boxShadow:`0 8px 32px ${c}15`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+      <div style={{width:20,height:20,borderRadius:"50%",background:`${c}20`,display:"flex",alignItems:"center",justifyContent:"center",color:c,fontWeight:700,fontSize:11,flexShrink:0}}>{ic}</div>
+      <div style={{flex:1,lineHeight:1.4}}>{t.msg}</div>
+      <div className="toast-progress" style={{color:c}}/>
+    </div>
+  );
+}
+
 function Toast({toasts,rm}){
   return(
     <div style={{position:"fixed",bottom:20,right:20,display:"flex",flexDirection:"column",gap:10,zIndex:9999}}>
-      {toasts.map(t=>{
-        const isErr = t.type==="error";
-        const isSuc = t.type==="success";
-        const c = isErr?RD:isSuc?GN:BL;
-        const ic = isErr?"!":isSuc?"✓":"ℹ";
-        return(
-        <div key={t.id} onClick={()=>rm(t.id)} style={{background:"rgba(10,20,40,0.95)",border:`1px solid ${c}45`,borderLeft:`4px solid ${c}`,padding:"12px 18px",borderRadius:8,color:TX,fontSize:13,boxShadow:`0 8px 32px ${c}15`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",gap:10,animation:"slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"}}>
-          <div style={{width:20,height:20,borderRadius:"50%",background:`${c}20`,display:"flex",alignItems:"center",justifyContent:"center",color:c,fontWeight:700,fontSize:11,flexShrink:0}}>{ic}</div>
-          <div style={{flex:1,lineHeight:1.4}}>{t.msg}</div>
-        </div>
-      )})}
+      {toasts.map(t=><ToastItem key={t.id} t={t} rm={rm}/>)}
     </div>
   );
 }
@@ -305,7 +537,7 @@ function ChatPage({addToast,setNotif,apiKey,apiModel,setApiModel}){
               </div>
             );
           })}
-          {busy&&<div className="fu"><div style={{display:"flex",alignItems:"center",gap:5,padding:"9px 13px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"12px 12px 12px 4px",width:"fit-content"}}>{[0,1,2].map(i=><div key={i} className="td" style={{width:6,height:6,borderRadius:"50%",background:GN,animationDelay:`${i*0.15}s`,opacity:0.7}}/>)}</div></div>}
+          {busy&&<div className="fu"><div style={{display:"flex",alignItems:"center",gap:5,padding:"9px 13px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"12px 12px 12px 4px",width:"fit-content"}}>{[0,1,2].map(i=><div key={i} className="typing-dot" />)}</div></div>}
           <div ref={endRef}/>
         </div>
         {isUsingDemoKey() && (
@@ -658,7 +890,7 @@ function SkillsPage({addToast}){
         <div style={{display:"flex",alignItems:"center",gap:6,flex:1,background:"rgba(255,255,255,0.04)",border:`1px solid ${BR}`,borderRadius:7,padding:"5px 9px"}}>
           <span style={{color:MT}}>⌕</span>
           <input value={sq} onChange={e=>setSq(e.target.value)} placeholder="Search skills…" style={{background:"transparent",border:"none",outline:"none",fontSize:12,color:TX,flex:1,fontFamily:"'Space Grotesk',sans-serif"}}/>
-          {sq&&<span onClick={()=>setSq("")} style={{cursor:"pointer",color:MT}}>✕</span>}
+          {sq&&<span className="btn-press" onClick={()=>setSq("")} style={{cursor:"pointer",color:MT}}>✕</span>}
         </div>
         {["All","Active","Disabled"].map(f=><button key={f} className="bd" onClick={()=>setFilt(f)} style={{padding:"4px 11px",background:filt===f?`${GN}20`:"rgba(255,255,255,0.04)",border:`1px solid ${filt===f?GN+"45":BR}`,borderRadius:6,color:filt===f?GN:MT,fontSize:11,cursor:"pointer"}}>{f}</button>)}
       </div>
@@ -990,7 +1222,7 @@ export default function App(){
   return(
     <div style={{display:"flex",minHeight:"100vh",background:"#020814",color:TX,position:"relative"}}>
       <style>{G}</style>
-      <div className="grid-bg"/>
+      <div className="dashboard-bg grid-bg"/><div className="ambient-glow"/>
       <div style={{position:"absolute",width:500,height:500,borderRadius:"50%",background:`${GN}06`,filter:"blur(80px)",top:-200,left:-100,pointerEvents:"none",zIndex:0}}/>
       <div style={{position:"absolute",width:400,height:400,borderRadius:"50%",background:`${BL}05`,filter:"blur(80px)",bottom:-150,right:-100,pointerEvents:"none",zIndex:0}}/>
       <Sidebar active={active} setActive={id=>{setActive(id);setMenuOpen(false);}} notif={notif} menuOpen={menuOpen} setMenuOpen={setMenuOpen}/>
