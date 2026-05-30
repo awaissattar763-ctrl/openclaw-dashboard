@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { getGroqApiKey, isUsingDemoKey, hasAnyKey } from "./lib/api-key";
+import { parseMarkdown } from "./lib/markdown.js";
 
 /* ══════════════════════════════════════════
    GLOBAL STYLES
@@ -30,6 +32,41 @@ body{font-family:'Rajdhani',sans-serif;background:#050c1a;color:#e2e8f0}
 .td{animation:tdot 1.2s ease infinite}
 input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(0,255,136,0.4)!important;box-shadow:0 0 0 3px rgba(0,255,136,0.06)!important}
 select option{background:#0a1628;color:#e2e8f0}
+@media (max-width: 768px) {
+  .mobile-hide { display: none !important; }
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; transform: translateX(-100%); transition: transform 0.3s ease; width: 240px !important; }
+  .sidebar.open { transform: translateX(0); }
+  .mobile-ham { display: block !important; }
+  .mobile-close { display: block !important; position: absolute; right: 14px; top: 16px; font-size: 18px; cursor: pointer; color: #5a6a82; }
+  .grid-bg { display: none; }
+  .chat-layout { flex-direction: column !important; padding: 8px !important; gap: 8px !important; }
+  .chat-sidebar { width: 100% !important; order: -1; }
+  .grid-5, .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr !important; }
+  .chart-row { grid-template-columns: 1fr !important; }
+  
+  /* tables to cards */
+  .resp-table, .resp-table thead, .resp-table tbody, .resp-table tr, .resp-table th, .resp-table td { display: block; }
+  .resp-table thead { display: none; }
+  .resp-table tr { border: 1px solid rgba(0,255,136,0.11); border-radius: 8px; margin-bottom: 12px; padding: 8px; background: rgba(8,20,44,0.78); }
+  .resp-table td { border: none !important; padding: 6px 8px !important; display: flex; justify-content: space-between; align-items: center; font-size: 11px !important; }
+  .resp-table td::before { content: attr(data-label); font-weight: 700; color: #5a6a82; text-transform: uppercase; font-size: 9px; }
+  .resp-table td > div { text-align: right; justify-content: flex-end; }
+}
+@media (min-width: 769px) {
+  .mobile-ham, .mobile-close { display: none !important; }
+  .sidebar { transform: translateX(0) !important; position: relative !important; }
+}
+
+@keyframes slideIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+.md-cb { background: rgba(0,0,0,0.3); border: 1px solid rgba(0,255,136,0.15); border-radius: 6px; margin: 10px 0; overflow: hidden; }
+.md-ch { background: rgba(0,255,136,0.08); padding: 4px 10px; font-size: 11px; color: #00ff88; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; border-bottom: 1px solid rgba(0,255,136,0.15); }
+.md-cb pre { padding: 10px; margin: 0; overflow-x: auto; }
+.md-cb code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #e2e8f0; line-height: 1.5; }
+.md-ic { background: rgba(255,255,255,0.08); padding: 2px 5px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: #00ff88; }
+.md-content ul { margin: 10px 0; padding-left: 20px; }
+.md-content li { margin-bottom: 4px; }
+.md-content a { color: #38d9f5; text-decoration: none; }
+.md-content a:hover { text-decoration: underline; }
 `;
 
 /* ══════════════════════════════════════════
@@ -77,13 +114,16 @@ const PL={chat:"Chat",overview:"Overview",channels:"Channels",instances:"Instanc
 /* ══════════════════════════════════════════
    SIDEBAR
 ══════════════════════════════════════════ */
-function Sidebar({active,setActive,notif}){
+function Sidebar({active,setActive,notif,menuOpen,setMenuOpen}){
   return(
-    <div style={{width:182,minHeight:"100vh",background:"rgba(3,7,18,0.97)",borderRight:`1px solid ${BR}`,display:"flex",flexDirection:"column",flexShrink:0,zIndex:10}}>
-      <div style={{padding:"14px 13px 12px",borderBottom:`1px solid ${BR}`,display:"flex",alignItems:"center",gap:9,flexShrink:0}}>
-        <div style={{width:30,height:30,borderRadius:8,background:`linear-gradient(135deg,${GN}35,${BL}25)`,border:`1px solid ${GN}45`,display:"flex",alignItems:"center",justifyContent:"center",animation:"glow 3s infinite"}}><span style={{color:GN,fontSize:16}}>◈</span></div>
-        <div><div style={{fontSize:14,fontWeight:700,color:TX,letterSpacing:"0.01em"}}>OpenClaw</div><div style={{fontSize:9,color:MT,marginTop:1}}>AI AGENT PLATFORM</div></div>
-      </div>
+    <>
+      {menuOpen && <div className="mobile-overlay" onClick={()=>setMenuOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:99,backdropFilter:"blur(2px)"}}/>}
+      <div className={`sidebar ${menuOpen?"open":""}`} style={{width:182,minHeight:"100vh",background:"rgba(3,7,18,0.97)",borderRight:`1px solid ${BR}`,display:"flex",flexDirection:"column",flexShrink:0,zIndex:100}}>
+        <div style={{padding:"14px 13px 12px",borderBottom:`1px solid ${BR}`,display:"flex",alignItems:"center",gap:9,flexShrink:0,position:"relative"}}>
+          <div style={{width:30,height:30,borderRadius:8,background:`linear-gradient(135deg,${GN}35,${BL}25)`,border:`1px solid ${GN}45`,display:"flex",alignItems:"center",justifyContent:"center",animation:"glow 3s infinite"}}><span style={{color:GN,fontSize:16}}>◈</span></div>
+          <div><div style={{fontSize:14,fontWeight:700,color:TX,letterSpacing:"0.01em"}}>OpenClaw</div><div style={{fontSize:9,color:MT,marginTop:1}}>AI AGENT PLATFORM</div></div>
+          <span className="mobile-close" onClick={()=>setMenuOpen(false)}>✕</span>
+        </div>
       <nav style={{flex:"1 1 0",padding:"8px 7px",overflowY:"auto",minHeight:0}}>
         {NAV.map(({sec,items})=>(
           <div key={sec} style={{marginBottom:5}}>
@@ -109,17 +149,19 @@ function Sidebar({active,setActive,notif}){
         </div>
       </div>
     </div>
+    </>
   );
 }
 
 /* ══════════════════════════════════════════
    TOPBAR
 ══════════════════════════════════════════ */
-function TopBar({active,notif,setActive,sq,setSq}){
+function TopBar({active,notif,setActive,sq,setSq,setMenuOpen}){
   return(
     <div style={{height:42,background:"rgba(3,7,18,0.9)",borderBottom:`1px solid ${BR}`,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 18px",flexShrink:0,backdropFilter:"blur(20px)"}}>
       <div style={{display:"flex",alignItems:"center",gap:5,fontSize:13}}>
-        <span style={{fontWeight:600,color:TX}}>OpenClaw</span><span style={{color:MT}}> › </span><span style={{color:GN,fontWeight:600}}>{PL[active]||active}</span>
+        <span className="mobile-ham" onClick={()=>setMenuOpen(true)} style={{fontSize:18,cursor:"pointer",marginRight:6,color:TX}}>☰</span>
+        <span className="mobile-hide" style={{fontWeight:600,color:TX}}>OpenClaw</span><span className="mobile-hide" style={{color:MT}}> › </span><span style={{color:GN,fontWeight:600}}>{PL[active]||active}</span>
       </div>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
         <div style={{display:"flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.04)",border:`1px solid ${BR}`,borderRadius:7,padding:"4px 9px"}}>
@@ -128,8 +170,8 @@ function TopBar({active,notif,setActive,sq,setSq}){
           {sq&&<span onClick={()=>setSq("")} style={{cursor:"pointer",color:MT}}>✕</span>}
         </div>
         <div style={{position:"relative",cursor:"pointer"}} onClick={()=>setActive("chat")}>
-          <span style={{fontSize:17,color:notif>0?GN:MT}}>🔔</span>
-          {notif>0&&<span style={{position:"absolute",top:-4,right:-4,fontSize:9,background:GN,color:"#050c1a",borderRadius:"50%",width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{notif}</span>}
+          <span style={{fontSize:17,color:(notif>0 && !hasAnyKey())?GN:MT}}>🔔</span>
+          {(notif>0 && !hasAnyKey())&&<span style={{position:"absolute",top:-4,right:-4,fontSize:9,background:GN,color:"#050c1a",borderRadius:"50%",width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{notif}</span>}
         </div>
         <div style={{width:27,height:27,borderRadius:"50%",background:`${GN}25`,border:`1px solid ${BR}`,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:9,fontWeight:700,color:GN}}>JT</span></div>
       </div>
@@ -142,31 +184,21 @@ function TopBar({active,notif,setActive,sq,setSq}){
 ══════════════════════════════════════════ */
 function Toast({toasts,rm}){
   return(
-    <div style={{position:"fixed",top:14,right:14,zIndex:9999,display:"flex",flexDirection:"column",gap:7}}>
-      {toasts.map(t=>(
-        <div key={t.id} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 13px",background:"rgba(5,12,26,0.97)",border:`1px solid ${t.type==="success"?GN+"45":t.type==="error"?RD+"45":BL+"45"}`,borderRadius:9,backdropFilter:"blur(20px)",minWidth:260,animation:"toastIn 0.28s ease"}}>
-          <span>{t.type==="success"?"✓":t.type==="error"?"✕":"ℹ"}</span>
-          <span style={{flex:1,fontSize:13,color:TX}}>{t.msg}</span>
-          <span onClick={()=>rm(t.id)} style={{cursor:"pointer",color:MT}}>✕</span>
+    <div style={{position:"fixed",bottom:20,right:20,display:"flex",flexDirection:"column",gap:10,zIndex:9999}}>
+      {toasts.map(t=>{
+        const isErr = t.type==="error";
+        const isSuc = t.type==="success";
+        const c = isErr?RD:isSuc?GN:BL;
+        const ic = isErr?"!":isSuc?"✓":"ℹ";
+        return(
+        <div key={t.id} onClick={()=>rm(t.id)} style={{background:"rgba(10,20,40,0.95)",border:`1px solid ${c}45`,borderLeft:`4px solid ${c}`,padding:"12px 18px",borderRadius:8,color:TX,fontSize:13,boxShadow:`0 8px 32px ${c}15`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",gap:10,animation:"slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"}}>
+          <div style={{width:20,height:20,borderRadius:"50%",background:`${c}20`,display:"flex",alignItems:"center",justifyContent:"center",color:c,fontWeight:700,fontSize:11,flexShrink:0}}>{ic}</div>
+          <div style={{flex:1,lineHeight:1.4}}>{t.msg}</div>
         </div>
-      ))}
+      )})}
     </div>
   );
 }
-
-/* ══════════════════════════════════════════
-   CHAT PAGE
-══════════════════════════════════════════ */
-const SYS=`You are OpenClaw, an enterprise AI agent for Jack Taylor at The Snayden Group. You have tools: gmail-voice-email, ScheduleMeetingVoice, sign-ops, tpassword, web_search, code_executor, docker_manager. When using a tool write: [TOOL: name | output: result]. Be concise and professional.`;
-
-function parseParts(text){
-  const re=/\[TOOL:\s*([^\|]+)\s*\|\s*output:\s*([^\]]+)\]/g;
-  const parts=[];let last=0,m;
-  while((m=re.exec(text))!==null){
-    if(m.index>last)parts.push({type:"text",text:text.slice(last,m.index).trim()});
-    parts.push({type:"tool",name:m[1].trim(),out:m[2].trim()});
-    last=m.index+m[0].length;
-  }
   if(last<text.length)parts.push({type:"text",text:text.slice(last).trim()});
   return parts;
 }
@@ -179,10 +211,11 @@ function ChatPage({addToast,setNotif,apiKey,apiModel,setApiModel}){
   const qs=["Book meeting with Sarah tomorrow 3pm","Draft email to CFO about Q4","Check Wynyard lease signature status","Get database credentials from vault","Write a Python script to parse CSV"];
   useEffect(()=>{endRef.current?.scrollIntoView({behavior:"smooth"});},[msgs,busy]);
 
-  const send=useCallback(async()=>{
-    const t=input.trim();
+  const send=useCallback(async(overrideText)=>{
+    const t=(typeof overrideText==="string"?overrideText:input).trim();
     if(!t||busy)return;
-    if(!apiKey){addToast("Add Groq API key in Config page","error");return;}
+    const effectiveKey = getGroqApiKey();
+    if(!effectiveKey){addToast("Add Groq API key in Config page","error");return;}
     const time=new Date().toLocaleTimeString();
     setMsgs(p=>[...p,{role:"user",content:t,time}]);
     setInput("");setBusy(true);setNotif(0);
@@ -195,7 +228,7 @@ function ChatPage({addToast,setNotif,apiKey,apiModel,setApiModel}){
       let reply = "";
       if(isVercel){
         // On Vercel — use serverless proxy (key stays secure)
-        const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:apiMsgs,system:SYS,apiKey,model:apiModel})});
+        const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:apiMsgs,system:SYS,apiKey:effectiveKey,model:apiModel})});
         const d=await res.json();
         if(d.error)throw new Error(d.error);
         reply=typeof d.content==="string"?d.content:d.content?.map(b=>b.text||"").join("")||"No response.";
@@ -204,7 +237,7 @@ function ChatPage({addToast,setNotif,apiKey,apiModel,setApiModel}){
         const groqMsgs=[{role:"system",content:SYS},...apiMsgs];
         const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{
           method:"POST",
-          headers:{"Content-Type":"application/json","Authorization":`Bearer ${apiKey}`},
+          headers:{"Content-Type":"application/json","Authorization":`Bearer ${effectiveKey}`},
           body:JSON.stringify({model:apiModel,messages:groqMsgs,max_tokens:1024,temperature:0.7})
         });
         const d=await res.json();
@@ -227,7 +260,7 @@ function ChatPage({addToast,setNotif,apiKey,apiModel,setApiModel}){
           <div style={{width:30,height:30,borderRadius:8,background:`${GN}25`,border:`1px solid ${GN}40`,display:"flex",alignItems:"center",justifyContent:"center",animation:"glow 3s infinite"}}><span style={{color:GN,fontSize:15}}>◈</span></div>
           <div style={{flex:1}}>
             <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,fontWeight:700,color:TX}}>OPENCLAW · CLAUDE</div>
-            <div style={{display:"flex",alignItems:"center",gap:5,marginTop:1}}><Dot c={busy?YL:apiKey?GN:RD} p={!!apiKey} s={5}/><span style={{fontSize:10,color:busy?YL:apiKey?GN:RD}}>{busy?"Thinking…":apiKey?`Ready · ${apiModel}`:"⚠ Add Groq key in Config"}</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:5,marginTop:1}}><Dot c={busy?YL:hasAnyKey()?GN:RD} p={hasAnyKey()} s={5}/><span style={{fontSize:10,color:busy?YL:hasAnyKey()?GN:RD}}>{busy?"Thinking…":hasAnyKey()?`Ready · ${apiModel}`:"⚠ Add Groq key in Config"}</span></div>
           </div>
           <select value={apiModel} onChange={e=>setApiModel(e.target.value)} style={{fontSize:10,background:"rgba(255,255,255,0.06)",border:`1px solid ${BR}`,borderRadius:5,padding:"3px 7px",color:TX,fontFamily:"'JetBrains Mono',monospace",cursor:"pointer"}}>
             <option value="llama-3.3-70b-versatile">llama-3.3-70b</option>
@@ -251,7 +284,7 @@ function ChatPage({addToast,setNotif,apiKey,apiModel,setApiModel}){
                       <div style={{fontSize:11,color:ML,fontFamily:"'JetBrains Mono',monospace",lineHeight:1.55}}>{p.out}</div>
                     </div>
                   ):(
-                    <div key={j} style={{maxWidth:"78%",padding:"8px 12px",borderRadius:isU?"12px 12px 4px 12px":"12px 12px 12px 4px",background:isU?`linear-gradient(135deg,${GN}22,${BL}15)`:"rgba(255,255,255,0.05)",border:`1px solid ${isU?GN+"30":"rgba(255,255,255,0.08)"}`,fontSize:13,color:TX,lineHeight:1.55,whiteSpace:"pre-wrap"}}>{p.text}</div>
+                    <div key={j} className="md-content" style={{maxWidth:"78%",padding:"8px 12px",borderRadius:isU?"12px 12px 4px 12px":"12px 12px 12px 4px",background:isU?`linear-gradient(135deg,${GN}22,${BL}15)`:"rgba(255,255,255,0.05)",border:`1px solid ${isU?GN+"30":"rgba(255,255,255,0.08)"}`,fontSize:13,color:TX,lineHeight:1.55}} dangerouslySetInnerHTML={{__html: parseMarkdown(p.text)}} />
                   )
                 )}
                 <span style={{fontSize:10,color:MT,fontFamily:"'JetBrains Mono',monospace"}}>{m.time}</span>
@@ -261,9 +294,17 @@ function ChatPage({addToast,setNotif,apiKey,apiModel,setApiModel}){
           {busy&&<div className="fu"><div style={{display:"flex",alignItems:"center",gap:5,padding:"9px 13px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"12px 12px 12px 4px",width:"fit-content"}}>{[0,1,2].map(i=><div key={i} className="td" style={{width:6,height:6,borderRadius:"50%",background:GN,animationDelay:`${i*0.15}s`,opacity:0.7}}/>)}</div></div>}
           <div ref={endRef}/>
         </div>
+        {isUsingDemoKey() && (
+          <div style={{background:"rgba(0,255,136,0.05)", border:`1px solid ${GN}40`, padding:"6px 12px", borderRadius:"6px", display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8, margin:"0 13px"}}>
+            <div style={{display:"flex", alignItems:"center", gap:6}}>
+              <Dot c={GN} p s={6}/><span style={{fontSize:11, color:GN}}>Demo mode · Free Groq llama-3.3-70b</span>
+            </div>
+            <span style={{fontSize:10, color:MT}}>Rate-limited to 20 messages/session</span>
+          </div>
+        )}
         <div style={{padding:"9px 13px",borderTop:`1px solid ${BR}`,display:"flex",gap:8,background:"rgba(0,0,0,0.12)"}}>
           <textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}} placeholder="Message OpenClaw… (Enter=send, Shift+Enter=newline)" rows={1} style={{flex:1,...inp(),resize:"none",padding:"7px 11px",lineHeight:1.5,maxHeight:80}}/>
-          <button className="bg" onClick={send} disabled={busy||!input.trim()} style={{padding:"7px 16px",background:busy||!input.trim()?`${GN}35`:`linear-gradient(135deg,${GN}dd,${BL}bb)`,border:"none",borderRadius:8,color:"#050c1a",fontFamily:"'Orbitron',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.05em",display:"flex",alignItems:"center",gap:5,cursor:busy?"not-allowed":"pointer"}}>
+          <button className="bg" onClick={()=>send()} disabled={busy||!input.trim()} style={{padding:"7px 16px",background:busy||!input.trim()?`${GN}35`:`linear-gradient(135deg,${GN}dd,${BL}bb)`,border:"none",borderRadius:8,color:"#050c1a",fontFamily:"'Orbitron',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.05em",display:"flex",alignItems:"center",gap:5,cursor:busy?"not-allowed":"pointer"}}>
             {busy?<span className="sp" style={{fontSize:14}}>↻</span>:"▶"} {busy?"":"SEND"}
           </button>
         </div>
@@ -271,11 +312,11 @@ function ChatPage({addToast,setNotif,apiKey,apiModel,setApiModel}){
       <div style={{width:185,display:"flex",flexDirection:"column",gap:9}}>
         <div style={{...card({padding:"11px 13px"})}}>
           <div style={{fontSize:10,fontWeight:700,color:MT,letterSpacing:"0.08em",marginBottom:8}}>QUICK COMMANDS</div>
-          {qs.map((q,i)=><button key={i} className="bd" onClick={()=>setInput(q)} style={{display:"block",width:"100%",textAlign:"left",padding:"6px 8px",background:"rgba(255,255,255,0.03)",border:`1px solid ${BR}`,borderRadius:6,color:ML,fontSize:11,marginBottom:4,cursor:"pointer",lineHeight:1.4}}>{q}</button>)}
+          {qs.map((q,i)=><button key={i} className="bd" onClick={()=>{setInput(q); send(q);}} style={{display:"block",width:"100%",textAlign:"left",padding:"6px 8px",background:"rgba(255,255,255,0.03)",border:`1px solid ${BR}`,borderRadius:6,color:ML,fontSize:11,marginBottom:4,cursor:"pointer",lineHeight:1.4}}>{q}</button>)}
         </div>
         <div style={{...card({padding:"11px 13px"})}}>
           <div style={{fontSize:10,fontWeight:700,color:MT,letterSpacing:"0.08em",marginBottom:8}}>SESSION</div>
-          {[["Messages",msgs.length],["Model","Sonnet 4.6"],["Status",apiKey?"Active":"No Key"]].map(([k,v])=>(
+          {[["Messages",msgs.length],["Model","Sonnet 4.6"],["Status",hasAnyKey()?"Active":"No Key"]].map(([k,v])=>(
             <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
               <span style={{fontSize:11,color:MT}}>{k}</span>
               <span style={{fontSize:11,color:TX,fontFamily:"'JetBrains Mono',monospace"}}>{v}</span>
@@ -303,7 +344,7 @@ function OverviewPage({stats}){
   return(
     <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="OVERVIEW" s="Real-time agent performance & infrastructure telemetry"/>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:9,marginBottom:13}}>
+      <div className="grid-5" style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:9,marginBottom:13}}>
         {[{l:"Requests",v:stats.requests.toLocaleString(),c:GN},{l:"Uptime",v:"99.9%",c:BL},{l:"Agents",v:"7",c:PU},{l:"CPU",v:Math.round(stats.cpu)+"%",c:stats.cpu>80?RD:GN},{l:"Memory",v:Math.round(stats.memory)+"%",c:OR}].map((s,i)=>(
           <div key={i} className="ch" style={{...card({padding:"12px 14px"})}}>
             <div style={{fontSize:10,color:MT,marginBottom:7,textTransform:"uppercase"}}>{s.l}</div>
@@ -311,7 +352,7 @@ function OverviewPage({stats}){
           </div>
         ))}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:11,marginBottom:11}}>
+      <div className="chart-row" style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:11,marginBottom:11}}>
         <div style={{...card({padding:"14px 16px"})}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
             <div><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,fontWeight:600,color:TX}}>REQUEST VOLUME</div><div style={{fontSize:10,color:MT,marginTop:2}}>Last 14 hours</div></div>
@@ -379,7 +420,7 @@ function ChannelsPage({addToast}){
   return(
     <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="CHANNELS" s="External integrations and communication channels"/>
-      <div style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:12}}>
+      <div className="grid-2" style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:12}}>
         <div style={{display:"flex",flexDirection:"column",gap:7}}>
           {chs.map((c,i)=>(
             <div key={i} className="nl" onClick={()=>setSel(i)} style={{...card({padding:"10px 12px"}),border:`1px solid ${i===sel?GN+"45":BR}`,background:i===sel?"rgba(0,255,136,0.06)":BC}}>
@@ -431,20 +472,20 @@ function InstancesPage({addToast}){
         ))}
       </div>
       <div style={{...card({padding:0,overflow:"hidden"})}}>
-        <table style={{width:"100%",borderCollapse:"collapse"}}>
+        <table className="resp-table" style={{width:"100%",borderCollapse:"collapse"}}>
           <thead><tr style={{borderBottom:`1px solid ${BR}`,background:"rgba(0,0,0,0.2)"}}>
             {["Instance","Type","Region","Status","CPU","Mem","Uptime","Actions"].map(h=><th key={h} style={{padding:"8px 12px",textAlign:"left",fontSize:9,color:MT,fontFamily:"'Orbitron',sans-serif",letterSpacing:"0.07em",textTransform:"uppercase",fontWeight:600}}>{h}</th>)}
           </tr></thead>
           <tbody>{insts.map((inst,i)=>(
             <tr key={i} className="rh" style={{borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
-              <td style={{padding:"9px 12px",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:TX}}>{inst.name}</td>
-              <td style={{padding:"9px 12px"}}><Bdg l={inst.type} c={inst.type==="Primary"?GN:inst.type==="Worker"?BL:PU} sm/></td>
-              <td style={{padding:"9px 12px",fontSize:11,color:ML}}>{inst.region}</td>
-              <td style={{padding:"9px 12px"}}><div style={{display:"flex",alignItems:"center",gap:5}}><Dot c={inst.status==="running"?GN:inst.status==="error"?RD:MT} p={inst.status==="running"} s={6}/><span style={{fontSize:11,color:inst.status==="running"?GN:inst.status==="error"?RD:MT,fontWeight:600}}>{inst.status}</span></div></td>
-              <td style={{padding:"9px 12px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><Prg v={inst.cpu} c={inst.cpu>80?RD:GN} h={4}/><span style={{fontSize:10,color:MT,minWidth:26}}>{inst.cpu}%</span></div></td>
-              <td style={{padding:"9px 12px",fontSize:10,color:TX,fontFamily:"'JetBrains Mono',monospace"}}>{inst.mem>0?`${inst.mem}MB`:"—"}</td>
-              <td style={{padding:"9px 12px",fontSize:10,color:MT,fontFamily:"'JetBrains Mono',monospace"}}>{inst.up}</td>
-              <td style={{padding:"9px 12px"}}><div style={{display:"flex",gap:4}}>{[["start","▶",GN],["stop","■",RD],["restart","↻",BL]].map(([action,ic,col])=>(
+              <td data-label="Instance" style={{padding:"9px 12px",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:TX}}>{inst.name}</td>
+              <td data-label="Type" style={{padding:"9px 12px"}}><Bdg l={inst.type} c={inst.type==="Primary"?GN:inst.type==="Worker"?BL:PU} sm/></td>
+              <td data-label="Region" style={{padding:"9px 12px",fontSize:11,color:ML}}>{inst.region}</td>
+              <td data-label="Status" style={{padding:"9px 12px"}}><div style={{display:"flex",alignItems:"center",gap:5}}><Dot c={inst.status==="running"?GN:inst.status==="error"?RD:MT} p={inst.status==="running"} s={6}/><span style={{fontSize:11,color:inst.status==="running"?GN:inst.status==="error"?RD:MT,fontWeight:600}}>{inst.status}</span></div></td>
+              <td data-label="CPU" style={{padding:"9px 12px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><Prg v={inst.cpu} c={inst.cpu>80?RD:GN} h={4}/><span style={{fontSize:10,color:MT,minWidth:26}}>{inst.cpu}%</span></div></td>
+              <td data-label="Mem" style={{padding:"9px 12px",fontSize:10,color:TX,fontFamily:"'JetBrains Mono',monospace"}}>{inst.mem>0?`${inst.mem}MB`:"—"}</td>
+              <td data-label="Uptime" style={{padding:"9px 12px",fontSize:10,color:MT,fontFamily:"'JetBrains Mono',monospace"}}>{inst.up}</td>
+              <td data-label="Actions" style={{padding:"9px 12px"}}><div style={{display:"flex",gap:4}}>{[["start","▶",GN],["stop","■",RD],["restart","↻",BL]].map(([action,ic,col])=>(
                 <button key={action} className="bd" onClick={()=>act(i,action)} style={{width:24,height:24,display:"flex",alignItems:"center",justifyContent:"center",background:`${col}12`,border:`1px solid ${col}25`,borderRadius:5,cursor:"pointer",fontSize:10,color:col}}>
                   {ld[i]===action?<span className="sp">↻</span>:ic}
                 </button>
@@ -477,14 +518,14 @@ function SessionsPage(){
         <thead><tr style={{borderBottom:`1px solid ${BR}`,background:"rgba(0,0,0,0.2)"}}>{["Session ID","Channel","Model","Msgs","Tokens","Status","Cost","Started"].map(h=><th key={h} style={{padding:"8px 12px",textAlign:"left",fontSize:9,color:MT,fontFamily:"'Orbitron',sans-serif",letterSpacing:"0.07em",textTransform:"uppercase",fontWeight:600}}>{h}</th>)}</tr></thead>
         <tbody>{filtered.map((s,i)=>(
           <tr key={i} className="rh" style={{borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
-            <td style={{padding:"8px 12px",fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:BL}}>{s.id}</td>
-            <td style={{padding:"8px 12px"}}><Bdg l={s.channel} c={BL} sm/></td>
-            <td style={{padding:"8px 12px",fontSize:10,color:ML,fontFamily:"'JetBrains Mono',monospace"}}>{s.model}</td>
-            <td style={{padding:"8px 12px",fontSize:12,color:TX,textAlign:"center"}}>{s.msgs}</td>
-            <td style={{padding:"8px 12px",fontSize:10,color:ML,fontFamily:"'JetBrains Mono',monospace"}}>{s.tokens.toLocaleString()}</td>
-            <td style={{padding:"8px 12px"}}><div style={{display:"flex",alignItems:"center",gap:5}}><Dot c={s.status==="active"?GN:MT} p={s.status==="active"} s={6}/><span style={{fontSize:11,color:s.status==="active"?GN:MT}}>{s.status}</span></div></td>
-            <td style={{padding:"8px 12px",fontSize:10,color:GN,fontFamily:"'JetBrains Mono',monospace"}}>{s.cost}</td>
-            <td style={{padding:"8px 12px",fontSize:10,color:MT}}>{s.start}</td>
+            <td data-label="Session ID" style={{padding:"8px 12px",fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:BL}}>{s.id}</td>
+            <td data-label="Channel" style={{padding:"8px 12px"}}><Bdg l={s.channel} c={BL} sm/></td>
+            <td data-label="Model" style={{padding:"8px 12px",fontSize:10,color:ML,fontFamily:"'JetBrains Mono',monospace"}}>{s.model}</td>
+            <td data-label="Msgs" style={{padding:"8px 12px",fontSize:12,color:TX,textAlign:"center"}}>{s.msgs}</td>
+            <td data-label="Tokens" style={{padding:"8px 12px",fontSize:10,color:ML,fontFamily:"'JetBrains Mono',monospace"}}>{s.tokens.toLocaleString()}</td>
+            <td data-label="Status" style={{padding:"8px 12px"}}><div style={{display:"flex",alignItems:"center",gap:5}}><Dot c={s.status==="active"?GN:MT} p={s.status==="active"} s={6}/><span style={{fontSize:11,color:s.status==="active"?GN:MT}}>{s.status}</span></div></td>
+            <td data-label="Cost" style={{padding:"8px 12px",fontSize:10,color:GN,fontFamily:"'JetBrains Mono',monospace"}}>{s.cost}</td>
+            <td data-label="Started" style={{padding:"8px 12px",fontSize:10,color:MT}}>{s.start}</td>
           </tr>
         ))}</tbody>
       </table></div>
@@ -508,8 +549,8 @@ function UtagsPage({addToast}){
   return(
     <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="UTAGS" s="User tagging system for routing and segmentation"/>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:12}}>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+      <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:12}}>
+        <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
           {tags.map((t,i)=>(
             <div key={i} className="ch" style={{...card({padding:"12px 14px",border:`1px solid ${t.active?t.color+"30":BR}`})}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}><span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700,color:t.color}}>{t.tag}</span><Tog on={t.active} onChange={()=>{setTags(p=>p.map((tg,j)=>j===i?{...tg,active:!tg.active}:tg));addToast(`${t.tag} ${t.active?"off":"on"}`,"info");}}/></div>
@@ -551,14 +592,14 @@ function AgentsPage({addToast}){
           <div key={i} className="ch" style={{...card({padding:"12px 14px"})}}><div style={{fontSize:10,color:MT,marginBottom:6,textTransform:"uppercase"}}>{s.l}</div><div style={{fontFamily:"'Orbitron',monospace",fontSize:20,fontWeight:700,color:s.c}}>{s.v}</div></div>
         ))}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11}}>
+      <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11}}>
         {agents.map((a,i)=>(
           <div key={i} className="ch" style={{...card({padding:"14px 16px",border:`1px solid ${a.status==="active"?GN+"28":a.status==="error"?RD+"28":BR}`})}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
               <div><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,fontWeight:700,color:TX,marginBottom:4}}>{a.name}</div><div style={{display:"flex",gap:6}}><Bdg l={a.role} c={a.role==="Primary"?GN:a.role==="Worker"?BL:PU} sm/><Bdg l={a.model} c={ML} sm/></div></div>
               <div style={{display:"flex",alignItems:"center",gap:5}}><Dot c={a.status==="active"?GN:a.status==="error"?RD:MT} p={a.status==="active"} s={7}/><span style={{fontSize:11,color:a.status==="active"?GN:a.status==="error"?RD:MT}}>{a.status}</span></div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+            <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
               {[["Tasks",a.tasks,BL],["Success",a.success+"%",GN],["Memory",a.mem>0?a.mem+"MB":"—",PU],["Skills",a.skills,OR]].map(([k,v,c])=>(
                 <div key={k} style={{background:"rgba(255,255,255,0.03)",borderRadius:6,padding:"7px 9px"}}><div style={{fontSize:9,color:MT,marginBottom:3,textTransform:"uppercase"}}>{k}</div><div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700,color:c}}>{v}</div></div>
               ))}
@@ -653,7 +694,7 @@ function NodesPage(){
               <div style={{display:"flex",alignItems:"center",gap:10}}><Dot c={n.status==="healthy"?GN:n.status==="warning"?YL:MT} p={n.status==="healthy"} s={8}/><div><div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,fontWeight:700,color:TX}}>{n.name}</div><div style={{fontSize:10,color:MT}}>{n.region} · {n.ip}</div></div></div>
               <div style={{display:"flex",gap:8}}><Bdg l={`${n.latency}ms`} c={n.latency>100?YL:GN} sm/><Bdg l={n.status} c={n.status==="healthy"?GN:n.status==="warning"?YL:MT} sm/><Bdg l={`${n.tasks} tasks`} c={BL} sm/></div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+            <div className="grid-3" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
               {[["CPU",n.cpu,GN],["Memory",n.mem,BL],["Disk",n.disk,PU]].map(([k,v,c])=>(
                 <div key={k}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,color:MT}}>{k}</span><span style={{fontSize:10,color:c,fontFamily:"'JetBrains Mono',monospace",fontWeight:700}}>{v}%</span></div><Prg v={v} c={v>80?RD:v>60?YL:c} h={6}/></div>
               ))}
@@ -673,7 +714,7 @@ function CommunicationsPage({addToast}){
   return(
     <div className="fu" style={{padding:"16px 20px"}}>
       <SH t="COMMUNICATIONS" s="Notification routing and messaging configuration"/>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
         <div style={{display:"flex",flexDirection:"column",gap:11}}>
           <div style={{...card({padding:"14px 16px"})}}>
             <div style={{fontSize:12,fontWeight:700,color:TX,marginBottom:12}}>EMAIL SETTINGS</div>
@@ -804,18 +845,24 @@ function ConfigPage({addToast,apiKey,setApiKey,apiModel,setApiModel}){
       {/* API KEY */}
       <div style={{...card({padding:"14px 16px",marginBottom:12,border:`1px solid ${GN}35`,background:`${GN}05`})}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><span style={{fontSize:16}}>⚡</span><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,fontWeight:700,color:GN}}>GROQ API KEY (FREE)</div></div>
-        <p style={{fontSize:12,color:MT,marginBottom:10}}>Free key at <span style={{color:BL}}>console.groq.com</span> — 1000+ tokens/sec, completely free!</p>
+        <p style={{fontSize:12,color:MT,marginBottom:10}}>Free key at <span style={{color:BL}}>console.groq.com</span> — no credit card needed</p>
         <div style={{display:"flex",gap:8,marginBottom:8}}>
-          <input type={showK?"text":"password"} value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="gsk_••••••••••••••••••••••••••••••••" style={{...inp(),flex:1,borderColor:apiKey?`${GN}45`:BR}}/>
+          <input type={showK?"text":"password"} value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder={isUsingDemoKey()?"Paste your own Groq key for unlimited use (optional)":"gsk_••••••••••••••••••••••••••••••••"} style={{...inp(),flex:1,borderColor:apiKey?`${GN}45`:BR}}/>
           <button className="bd" onClick={()=>setShowK(s=>!s)} style={{padding:"7px 10px",background:"rgba(255,255,255,0.04)",border:`1px solid ${BR}`,borderRadius:7,cursor:"pointer",color:MT}}>{showK?"Hide":"Show"}</button>
           <button className="bg" onClick={saveKey} style={{padding:"7px 16px",background:`linear-gradient(135deg,${GN}cc,${BL}aa)`,border:"none",borderRadius:7,color:"#050c1a",fontFamily:"'Orbitron',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>SAVE KEY</button>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          {apiKey?<><Dot c={GN} p s={6}/><span style={{fontSize:11,color:GN}}>Key active — Chat is live!</span></>:<><Dot c={RD} s={6}/><span style={{fontSize:11,color:MT}}>No key set</span></>}
-          {apiKey&&<button className="bd" onClick={deleteKey} style={{marginLeft:"auto",padding:"3px 9px",background:`${RD}12`,border:`1px solid ${RD}25`,borderRadius:5,color:RD,fontSize:10,cursor:"pointer"}}>Delete</button>}
+          {isUsingDemoKey() ? (
+            <><Dot c={GN} p={false} s={6}/><span style={{fontSize:11,color:GN}}>Demo key active · llama-3.3-70b</span></>
+          ) : apiKey ? (
+            <><Dot c={GN} p s={6}/><span style={{fontSize:11,color:GN}}>Custom key active · gsk_•••••••••{apiKey.slice(-4)}</span></>
+          ) : (
+            <><Dot c={RD} s={6}/><span style={{fontSize:11,color:MT}}>No key set</span></>
+          )}
+          {apiKey && !isUsingDemoKey() && <button className="bd" onClick={deleteKey} style={{marginLeft:"auto",padding:"3px 9px",background:`${RD}12`,border:`1px solid ${RD}25`,borderRadius:5,color:RD,fontSize:10,cursor:"pointer"}}>Remove key</button>}
         </div>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      <div className="grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
         <div style={{...card({padding:"14px 16px"})}}>
           <div style={{fontSize:12,fontWeight:700,color:TX,marginBottom:12}}>AGENT PARAMETERS</div>
           <div style={{marginBottom:9}}>
@@ -864,6 +911,7 @@ export default function App(){
   const [sq,setSq]=useState("");
   const [apiKey,setApiKey]=useState(()=>storage.get("openclaw:apiKey")||"")
   const [apiModel,setApiModel]=useState(()=>storage.get("openclaw:apiModel")||"llama-3.3-70b-versatile");
+  const [menuOpen,setMenuOpen]=useState(false);
 
   // Persist apiKey and model when changed
   useEffect(()=>{if(apiKey)storage.set("openclaw:apiKey",apiKey);},[apiKey]);
@@ -931,9 +979,9 @@ export default function App(){
       <div className="grid-bg"/>
       <div style={{position:"absolute",width:500,height:500,borderRadius:"50%",background:`${GN}06`,filter:"blur(80px)",top:-200,left:-100,pointerEvents:"none",zIndex:0}}/>
       <div style={{position:"absolute",width:400,height:400,borderRadius:"50%",background:`${BL}05`,filter:"blur(80px)",bottom:-150,right:-100,pointerEvents:"none",zIndex:0}}/>
-      <Sidebar active={active} setActive={setActive} notif={notif}/>
+      <Sidebar active={active} setActive={id=>{setActive(id);setMenuOpen(false);}} notif={notif} menuOpen={menuOpen} setMenuOpen={setMenuOpen}/>
       <div style={{flex:"1 1 0",display:"flex",flexDirection:"column",position:"relative",zIndex:1,minWidth:0,minHeight:"100vh"}}>
-        <TopBar active={active} notif={notif} setActive={setActive} sq={sq} setSq={setSq}/>
+        <TopBar active={active} notif={notif} setActive={setActive} sq={sq} setSq={setSq} setMenuOpen={setMenuOpen}/>
         <main ref={mainRef} style={{flex:"1 1 0",overflowY:"auto",overflowX:"hidden",paddingTop:12,minHeight:0,position:"relative"}}>{renderPage()}</main>
       </div>
       <Toast toasts={toasts} rm={rmToast}/>
