@@ -460,8 +460,9 @@ function ChatPage({addToast,setNotif,apiKey,apiModel,setApiModel}){
   const send=useCallback(async(overrideText)=>{
     const t=(typeof overrideText==="string"?overrideText:input).trim();
     if(!t||busy)return;
+    const isVercel = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
     const effectiveKey = getGroqApiKey();
-    if(!effectiveKey){addToast("Add Groq API key in Config page","error");return;}
+    if(!isVercel && !effectiveKey){addToast("Add Groq API key in Config page","error");return;}
     const time=new Date().toLocaleTimeString();
     setMsgs(p=>[...p,{role:"user",content:t,time}]);
     setInput("");setBusy(true);setNotif(0);

@@ -20,5 +20,9 @@ export function isUsingDemoKey() {
 }
 
 export function hasAnyKey() {
+  if (typeof window !== 'undefined') {
+    const isVercel = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    if (isVercel) return true;
+  }
   return !!getGroqApiKey();
 }
